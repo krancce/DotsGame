@@ -32,6 +32,7 @@ class Begin extends Phaser.Scene {
         const restart = new Button(this.cameras.main.centerX, 540, 'Go!', this, () => startGame(this));
 
         // -------   Create a dropdown list --------
+        // source : https://codepen.io/rexrainbow/pen/RwQoXqa
         var stringOption = false;
         var options;
         if (stringOption) {
@@ -119,8 +120,9 @@ class Begin extends Phaser.Scene {
 var CreateTextObject = function (scene, text) {
     return scene.add.text(0, 0, text, { fontSize: 20 })
 }
-
+//-----------------------   drop-down list created   ----------------------
 var startGame = function (sce) {
+    // change to the game scene
     if (difficulty < 5) {
         sce.add.text(220, 430, "You have to choose one!", { font: '15px Arial', fill: '#ff0000' });
     } else {
@@ -132,8 +134,8 @@ var startGame = function (sce) {
 const COLOR_PRIMARY = 0x03a9f4;
 const COLOR_LIGHT = 0x67daff;
 const COLOR_DARK = 0x000000;
-const COLOR_ARRAY = [0xff0000, 0xffff00, 0x00ff00, 0x00ffff, 0x0000ff, 0xff00ff, 0x000000, 0xffffff];
-var board;
+const COLOR_ARRAY = [0xff0000, 0xffff00, 0x00ff00, 0x00ffff, 0x0000ff, 0xff00ff, 0x000000, 0xffffff];//store the colors of ball
+var board;//save the board object
 var colorArray, ballArray;
 var clickedBallColor = -1, clickedBallArray = new Array();
 var lineArray = new Array();
@@ -243,8 +245,11 @@ class Game extends Phaser.Scene {
             else if (!_.isEqual(lastBall, ball) && Phaser.Math.Distance.BetweenPoints(lastBall, ball) <= 66) {
                 // if the current selected ball is not the same as the last one & they are neighbours
                 if (color == clickedBallColor) {
+                    // if the current ball's color is the same as the last one
                     if (clickedBallArray.includes(ball)) {
+                        // if the current ball has been selected before
                         if (clickedBallArray.indexOf(ball) == 0) {
+                            // if it's a loop
                             drawLine(this, lastBall.x, lastBall.y, ball.x, ball.y);
                             console.log("delete all!");
                             deleteAll(this, clickedBallColor);
@@ -290,6 +295,7 @@ var getHexagonGrid = function (scene) {
 };
 
 var checkMouseInBoard = function () {
+    // check if mouse is not out side the board
     if (mouse.x > 15 && mouse.x < 555 && mouse.y > 180 && mouse.y < 950) {
         return true;
     } else {
@@ -298,6 +304,7 @@ var checkMouseInBoard = function () {
 }
 
 var initializeBall = function (scene, tileX, tileY, color) {
+    // create ball for the first time 
     var worldXY = board.tileXYToWorldXY(tileX, tileY)
     var ball = scene.add.circle(worldXY.x, worldXY.y, 15, color).setStrokeStyle(1.5, 0xefc53f);
     scene.physics.add.existing(ball);
@@ -306,6 +313,7 @@ var initializeBall = function (scene, tileX, tileY, color) {
 }
 
 var initializeBoard = function (scene) {
+    // check the board and create all the balls for the first time
     for (var i = 0; i < 9; i++) {
         for (var j = 0; j < 12; j++) {
             if (colorArray[i][j] == -1) {
@@ -324,6 +332,7 @@ var drawLine = function (scene, obj1x, obj1y, obj2x, obj2y) {
 }
 
 var deleteAll = function (scene, color) {
+    // delete all of the same color balls
     var count = 0;
     for (var i = 0; i < 9; i++) {
         for (var j = 0; j < 12; j++) {
@@ -340,6 +349,7 @@ var deleteAll = function (scene, color) {
 }
 
 var deleteSelected = function (arrayLength) {
+    // delete the balls in the selected-balls array
     if (arrayLength > 1) {
         clickedBallArray.forEach(element => {
             var tileXY = board.worldXYToTileXY(element.x, element.y);
@@ -355,6 +365,7 @@ var deleteSelected = function (arrayLength) {
 }
 
 var timePass = function () {
+    // time control
     this.initialTime -= 1; // One second
     timeText.setText('Time: ' + this.initialTime);
 }
@@ -364,50 +375,52 @@ var scored = function (points) {
     scoreText.setText('Score: ' + score);
 }
 
-var checkIfMove = function (scene) {
-    // update balls position on the map
-    for (var i = 0; i < 9; i++) {
-        for (var j = 1; j < 12; j++) {
-            if (colorArray[i][j] == -1 && colorArray[i][j - 1] != -1) {
-                // for each check if current tile is empty & the upper one is not
-                colorArray[i][j] = colorArray[i][j - 1];
-                // set current tile's color = the upper tile
-                colorArray[i][j - 1] = -1;
-                // set the upper tile to empty
-                moveBall(scene, ballArray[i][j - 1], i, j);
-                // call the move function
-                ballArray[i][j] = ballArray[i][j - 1];
-                // update the ball object array
-            }
-        }
-    }
-    scene.time.addEvent({ delay: 320, loop: false, callback: () => { refillBall(scene); } });
-}
+//------------ These are the codes for ZigZag movement ----------
 
-var moveBall = function (scene, ball, tileX, tileY) {
-    var target = board.tileXYToWorldXY(tileX, tileY);
-    scene.physics.moveToObject(ball, target, 200);
-    scene.time.addEvent({ delay: 320, loop: false, callback: () => { ball.body.reset(target.x, target.y); } });
-}
+// var checkIfMove = function (scene) {
+//     // update balls position on the map
+//     for (var i = 0; i < 9; i++) {
+//         for (var j = 1; j < 12; j++) {
+//             if (colorArray[i][j] == -1 && colorArray[i][j - 1] != -1) {
+//                 // for each check if current tile is empty & the upper one is not
+//                 colorArray[i][j] = colorArray[i][j - 1];
+//                 // set current tile's color = the upper tile
+//                 colorArray[i][j - 1] = -1;
+//                 // set the upper tile to empty
+//                 moveBall(scene, ballArray[i][j - 1], i, j);
+//                 // call the move function
+//                 ballArray[i][j] = ballArray[i][j - 1];
+//                 // update the ball object array
+//             }
+//         }
+//     }
+//     scene.time.addEvent({ delay: 320, loop: false, callback: () => { refillBall(scene); } });
+// }
 
-var refillBall = function (scene) {
-    for (var i = 0; i < 9; i++) {
-        for (var j = 0; j < 12; j++) {
-            if (colorArray[i][j] == -1) {
-                var rnd = Math.floor(Math.random() * difficulty);
-                var worldXY = board.tileXYToWorldXY(i, j)
-                var ball = scene.add.circle(worldXY.x, 300, 15, COLOR_ARRAY[rnd]).setStrokeStyle(1.5, 0xefc53f);
-                scene.physics.add.existing(ball);
-                ball.body.setAllowGravity(false);
-                var target = board.tileXYToWorldXY(i, 0);
-                scene.physics.moveToObject(ball, target, 200);
-                scene.time.addEvent({ delay: 320, loop: false, callback: () => { ball.body.reset(target.x, target.y); } });
-                colorArray[i][0] = rnd;
-                ballArray[i][0] = ball;
-            }
-        }
-    }
-}
+// var moveBall = function (scene, ball, tileX, tileY) {
+//     var target = board.tileXYToWorldXY(tileX, tileY);
+//     scene.physics.moveToObject(ball, target, 200);
+//     scene.time.addEvent({ delay: 320, loop: false, callback: () => { ball.body.reset(target.x, target.y); } });
+// }
+
+// var refillBall = function (scene) {
+//     for (var i = 0; i < 9; i++) {
+//         for (var j = 0; j < 12; j++) {
+//             if (colorArray[i][j] == -1) {
+//                 var rnd = Math.floor(Math.random() * difficulty);
+//                 var worldXY = board.tileXYToWorldXY(i, j)
+//                 var ball = scene.add.circle(worldXY.x, 300, 15, COLOR_ARRAY[rnd]).setStrokeStyle(1.5, 0xefc53f);
+//                 scene.physics.add.existing(ball);
+//                 ball.body.setAllowGravity(false);
+//                 var target = board.tileXYToWorldXY(i, 0);
+//                 scene.physics.moveToObject(ball, target, 200);
+//                 scene.time.addEvent({ delay: 320, loop: false, callback: () => { ball.body.reset(target.x, target.y); } });
+//                 colorArray[i][0] = rnd;
+//                 ballArray[i][0] = ball;
+//             }
+//         }
+//     }
+// }
 
 
 //------------------------------------------------------   GameOver Scene   ---------------------------------------------------------------
